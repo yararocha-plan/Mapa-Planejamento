@@ -1,0 +1,603 @@
+<div id="app"></div>
+<style>
+  :root{
+    --ink:#1c2420;
+    --paper:#f6f4ee;
+    --paper-line:#dcd8cc;
+    --accent:#c0532c;
+    --accent-2:#1f6f5c;
+    --muted:#7c7768;
+    --weekend:#efece2;
+    --today:#c0532c;
+    --danger:#a83e3e;
+    font-variant-numeric: tabular-nums;
+  }
+  *{box-sizing:border-box;}
+  #app{
+    font-family:'Helvetica Neue', Arial, sans-serif;
+    background:var(--paper);
+    color:var(--ink);
+    min-height:100%;
+    padding:0;
+  }
+  .masthead{
+    background:var(--ink);
+    color:var(--paper);
+    padding:22px 28px 18px;
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    flex-wrap:wrap;
+    gap:14px;
+    border-bottom:4px solid var(--accent);
+  }
+  .masthead h1{
+    font-family:Georgia, 'Times New Roman', serif;
+    font-size:26px;
+    font-weight:700;
+    letter-spacing:0.5px;
+    margin:0;
+  }
+  .masthead .kicker{
+    font-size:11px;
+    letter-spacing:2.5px;
+    text-transform:uppercase;
+    color:var(--accent);
+    margin:0 0 4px;
+    font-weight:700;
+  }
+  .month-nav{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-family:Georgia, serif;
+  }
+  .month-nav button{
+    background:none;
+    border:1px solid rgba(246,244,238,0.4);
+    color:var(--paper);
+    width:30px;height:30px;
+    border-radius:50%;
+    cursor:pointer;
+    font-size:15px;
+    line-height:1;
+  }
+  .month-nav button:hover{background:rgba(246,244,238,0.15);}
+  .month-label{font-size:17px; min-width:150px; text-align:center; text-transform:uppercase; letter-spacing:1px;}
+
+  .layout{
+    display:grid;
+    grid-template-columns:300px 1fr;
+    gap:0;
+    align-items:start;
+  }
+  @media (max-width:900px){
+    .layout{grid-template-columns:1fr;}
+  }
+
+  .panel{
+    padding:22px 24px;
+    border-right:1px solid var(--paper-line);
+  }
+  .panel h2{
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:2px;
+    color:var(--muted);
+    margin:0 0 14px;
+    font-weight:700;
+  }
+  .field{margin-bottom:12px;}
+  .field label{
+    display:block;
+    font-size:11px;
+    color:var(--muted);
+    margin-bottom:4px;
+    text-transform:uppercase;
+    letter-spacing:0.5px;
+  }
+  .field input{
+    width:100%;
+    padding:8px 9px;
+    border:1px solid var(--paper-line);
+    background:#fff;
+    font-size:14px;
+    border-radius:2px;
+    font-family:inherit;
+    color:var(--ink);
+  }
+  .field input:focus{outline:2px solid var(--accent-2); outline-offset:1px;}
+  .add-btn{
+    width:100%;
+    padding:10px;
+    background:var(--accent);
+    color:#fff;
+    border:none;
+    border-radius:2px;
+    font-size:13px;
+    font-weight:700;
+    letter-spacing:0.5px;
+    text-transform:uppercase;
+    cursor:pointer;
+    margin-top:4px;
+  }
+  .add-btn:hover{background:#a3451f;}
+  .add-btn:disabled{background:#c9c4b6; cursor:not-allowed;}
+  .error-msg{color:var(--danger); font-size:12px; margin-top:6px; min-height:14px;}
+
+  .legend{margin-top:22px;}
+  .legend-row{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-size:13px;
+    padding:4px 0;
+  }
+  .swatch{width:12px;height:12px;border-radius:2px;flex:none;}
+
+  .board-wrap{padding:20px 24px; overflow-x:auto;}
+  table.gantt{
+    border-collapse:collapse;
+    width:100%;
+    min-width:900px;
+  }
+  table.gantt th, table.gantt td{
+    border:1px solid var(--paper-line);
+    text-align:center;
+    font-size:12px;
+    padding:0;
+  }
+  table.gantt thead th{
+    background:var(--ink);
+    color:var(--paper);
+    padding:6px 3px;
+    font-weight:600;
+    position:sticky;
+    top:0;
+  }
+  table.gantt thead .month-row th{
+    font-family:Georgia, serif;
+    letter-spacing:3px;
+    font-size:12px;
+    text-transform:uppercase;
+    background:var(--accent);
+  }
+  th.rowlabel, td.rowlabel{
+    text-align:left;
+    padding:6px 8px;
+    font-size:12.5px;
+    white-space:nowrap;
+    background:#fff;
+  }
+  td.rowlabel.quem{font-weight:700;}
+  td.rowlabel.cliente{color:var(--muted);}
+  .daycell{width:26px; height:30px;}
+  .daycell.weekend{background:var(--weekend);}
+  .daycell.today-col{box-shadow:inset 0 0 0 2px var(--today);}
+  .day-header.today-col{background:var(--accent) !important;}
+  .filled{position:relative;}
+  .filled .bar{position:absolute; inset:2px 0; }
+  td.job{text-align:left; padding:6px 8px; font-size:12.5px; min-width:260px;}
+  table.gantt th.rowlabel:nth-child(3){min-width:260px;}
+  .del-btn, .edit-btn{
+    background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;
+    padding:2px 5px; visibility:hidden;
+  }
+  tr:hover .del-btn, tr:hover .edit-btn{visibility:visible;}
+  .del-btn:hover{color:var(--danger);}
+  .edit-btn:hover{color:var(--accent-2);}
+  .cancel-edit{
+    display:block;
+    width:100%;
+    text-align:center;
+    background:none;
+    border:none;
+    color:var(--muted);
+    font-size:12px;
+    text-decoration:underline;
+    cursor:pointer;
+    margin-top:8px;
+    padding:4px;
+  }
+  .editing-banner{
+    font-size:11px;
+    color:var(--accent-2);
+    text-transform:uppercase;
+    letter-spacing:1px;
+    font-weight:700;
+    margin-bottom:10px;
+  }
+
+  .empty-state{
+    padding:60px 24px;
+    text-align:center;
+    color:var(--muted);
+    font-size:14px;
+  }
+  .empty-state strong{display:block; font-size:16px; color:var(--ink); margin-bottom:6px; font-family:Georgia, serif;}
+
+  .footnote{
+    padding:10px 24px 24px;
+    font-size:11px;
+    color:var(--muted);
+  }
+  .loading{padding:40px; text-align:center; color:var(--muted);}
+
+  .backup-box{
+    border-top:1px solid var(--paper-line);
+    margin-top:22px;
+    padding-top:16px;
+  }
+  .backup-hint{
+    font-size:11.5px;
+    color:var(--muted);
+    line-height:1.5;
+    margin:0 0 10px;
+  }
+  .backup-btn{
+    display:block;
+    width:100%;
+    padding:8px;
+    background:#fff;
+    border:1px solid var(--ink);
+    color:var(--ink);
+    border-radius:2px;
+    font-size:12px;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:0.5px;
+    text-align:center;
+    cursor:pointer;
+    margin-bottom:8px;
+    box-sizing:border-box;
+  }
+  .backup-btn:hover{background:var(--ink); color:#fff;}
+</style>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCmmG2VGKstCwE8sw8q1PKtDvQUiU0S2b0",
+  authDomain: "mapa-planejamento-f7a9e.firebaseapp.com",
+  projectId: "mapa-planejamento-f7a9e",
+  storageBucket: "mapa-planejamento-f7a9e.firebasestorage.app",
+  messagingSenderId: "19775634217",
+  appId: "1:19775634217:web:075b022a60b3d7ade55538"
+};
+const fbApp = initializeApp(firebaseConfig);
+const db = getFirestore(fbApp);
+const docRef = doc(db, "trafego", "entries");
+
+(function(){
+  const MONTHS_PT = ['JANEIRO','FEVEREIRO','MARÇO','ABRIL','MAIO','JUNHO','JULHO','AGOSTO','SETEMBRO','OUTUBRO','NOVEMBRO','DEZEMBRO'];
+  const WEEKDAY_PT = ['D','S','T','Q','Q','S','S'];
+  const PALETTE = ['#D9772E','#4B5FA8','#8C9F3D','#B5541E','#5B7C99','#A0785A','#6E7B8B','#3E5C76'];
+
+  // Cores fixas por cliente (aliases em minúsculo, sem acento)
+  const FIXED_CLIENT_COLORS = {
+    'greenz': '#4B5320',            // verde militar
+    'simplus': '#7A4F9E',           // roxo
+    'kibon': '#6B4226',             // marrom
+    'magnum': '#6B4226',            // marrom (Kibon/Magnun)
+    'cultura': '#C1443C',           // vermelho
+    'cultura inglesa': '#C1443C',   // vermelho
+    'gac': '#8C8C8C',               // cinza
+    'fini': '#E8659C',              // rosa
+    'mustela': '#1FA8A0',           // azul turquesa
+    'skechers': '#16264A',          // azul marinho
+    'shell': '#E07B1A',             // laranja
+    'yelum': '#F0C419',             // amarelo
+    'hdi': '#009739'                // verde bandeira
+  };
+
+  function normalize(str){
+    return str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
+  }
+
+  let entries = [];
+  let editingId = null;
+  let viewYear, viewMonth; // viewMonth 0-indexed
+  let storageOk = true;
+
+  const today = new Date();
+  viewYear = today.getFullYear();
+  viewMonth = today.getMonth();
+
+  const app = document.getElementById('app');
+
+  function getClientColor(cliente){
+    const n = normalize(cliente);
+    if(FIXED_CLIENT_COLORS[n]) return FIXED_CLIENT_COLORS[n];
+    // tenta casar por substring (ex: "Kibon Sorvetes" -> kibon)
+    const key = Object.keys(FIXED_CLIENT_COLORS).find(k => n.includes(k));
+    if(key) return FIXED_CLIENT_COLORS[key];
+    // fallback: cor estável via hash para clientes não mapeados
+    let h = 0;
+    for(let i=0;i<n.length;i++){ h = (h*31 + n.charCodeAt(i)) >>> 0; }
+    return PALETTE[h % PALETTE.length];
+  }
+
+  function parseDate(s){
+    // s = 'YYYY-MM-DD'
+    const [y,m,d] = s.split('-').map(Number);
+    return new Date(y, m-1, d);
+  }
+
+  function fmtDateISO(d){
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  }
+
+  async function loadEntries(){
+    try{
+      const snap = await getDoc(docRef);
+      entries = snap.exists() && Array.isArray(snap.data().entries) ? snap.data().entries : [];
+      storageOk = true;
+    }catch(e){
+      entries = [];
+      storageOk = false;
+    }
+  }
+
+  async function saveEntries(){
+    try{
+      await setDoc(docRef, { entries });
+      storageOk = true;
+    }catch(e){
+      storageOk = false;
+    }
+  }
+
+  function daysInMonth(y,m){ return new Date(y, m+1, 0).getDate(); }
+
+  function render(){
+    const numDays = daysInMonth(viewYear, viewMonth);
+    const clientsInView = [...new Set(entries.map(e=>e.cliente))].sort();
+
+    // sort rows: by Quem, then start date
+    const sorted = [...entries].sort((a,b)=>{
+      if(a.quem !== b.quem) return a.quem.localeCompare(b.quem, 'pt');
+      return a.inicio.localeCompare(b.inicio);
+    });
+
+    let dayHeaders = '';
+    let weekdayHeaders = '';
+    for(let d=1; d<=numDays; d++){
+      const dt = new Date(viewYear, viewMonth, d);
+      const isWeekend = dt.getDay()===0 || dt.getDay()===6;
+      const isToday = fmtDateISO(dt) === fmtDateISO(today);
+      dayHeaders += `<th class="day-header ${isToday?'today-col':''}">${d}</th>`;
+      weekdayHeaders += `<th class="daycell ${isWeekend?'weekend':''} ${isToday?'today-col':''}" style="font-size:9px;color:${isWeekend?'#a8a290':'#cfcabb'};background:${isToday?'var(--accent)':'var(--ink)'};padding:2px 0;">${WEEKDAY_PT[dt.getDay()]}</th>`;
+    }
+
+    let rows = '';
+    if(sorted.length === 0){
+      rows = '';
+    } else {
+      rows = sorted.map(e=>{
+        const color = getClientColor(e.cliente);
+        const start = parseDate(e.inicio);
+        const end = parseDate(e.entrega);
+        let cells = '';
+        for(let d=1; d<=numDays; d++){
+          const dt = new Date(viewYear, viewMonth, d);
+          const isWeekend = dt.getDay()===0 || dt.getDay()===6;
+          const isToday = fmtDateISO(dt)===fmtDateISO(today);
+          const inRange = dt >= new Date(start.getFullYear(),start.getMonth(),start.getDate()) && dt <= new Date(end.getFullYear(),end.getMonth(),end.getDate());
+          cells += `<td class="daycell ${isWeekend?'weekend':''} ${isToday?'today-col':''} ${inRange?'filled':''}" style="${inRange?`background:${color};`:''}"></td>`;
+        }
+        return `<tr>
+          <td class="rowlabel quem">${escapeHtml(e.quem)}</td>
+          <td class="rowlabel cliente"><span class="swatch" style="background:${color};display:inline-block;margin-right:6px;"></span>${escapeHtml(e.cliente)}</td>
+          <td class="job">${escapeHtml(e.job)} <button class="edit-btn" data-id="${e.id}" title="Editar">✎</button><button class="del-btn" data-id="${e.id}" title="Remover">✕</button></td>
+          ${cells}
+        </tr>`;
+      }).join('');
+    }
+
+    const legend = clientsInView.length ? clientsInView.map(c=>`
+      <div class="legend-row"><span class="swatch" style="background:${getClientColor(c)}"></span>${escapeHtml(c)}</div>
+    `).join('') : '<div style="font-size:12px;color:var(--muted);">Nenhum cliente ainda</div>';
+
+    app.innerHTML = `
+      <div class="masthead">
+        <div>
+          <p class="kicker">Traffic Map</p>
+          <h1>Mapa de Trabalho da Equipe</h1>
+        </div>
+        <div class="month-nav">
+          <button id="refreshBtn" title="Buscar atualizações da equipe">⟳</button>
+          <button id="prevMonth">‹</button>
+          <span class="month-label">${MONTHS_PT[viewMonth]} ${viewYear}</span>
+          <button id="nextMonth">›</button>
+        </div>
+      </div>
+      <div class="layout">
+        <div class="panel">
+          <h2>${editingId ? 'Editar Job' : 'Novo Job'}</h2>
+          ${editingId ? '<div class="editing-banner">Editando job existente</div>' : ''}
+          <div class="field"><label>Responsável</label><input id="f-quem" type="text" placeholder="Ex: Yara"></div>
+          <div class="field"><label>Cliente</label><input id="f-cliente" type="text" placeholder="Ex: Kibon"></div>
+          <div class="field"><label>Job</label><input id="f-job" type="text" placeholder="Ex: BrandPlan"></div>
+          <div class="field"><label>Início</label><input id="f-inicio" type="date"></div>
+          <div class="field"><label>Entrega</label><input id="f-entrega" type="date"></div>
+          <button class="add-btn" id="addBtn">${editingId ? 'Salvar alterações' : 'Adicionar ao mapa'}</button>
+          ${editingId ? '<button class="cancel-edit" id="cancelEdit">Cancelar edição</button>' : ''}
+          <div class="error-msg" id="errorMsg"></div>
+          <div class="legend">
+            <h2 style="margin-top:22px;">Clientes</h2>
+            ${legend}
+          </div>
+          <div class="backup-box">
+            <h2 style="margin-top:22px;">Backup</h2>
+            <p class="backup-hint">Antes de republicar o artefato, exporte um backup. Depois de republicar, importe o arquivo de volta.</p>
+            <button class="backup-btn" id="exportBtn">Exportar backup (.json)</button>
+            <label class="backup-btn import-label" for="importFile">Importar backup</label>
+            <input type="file" id="importFile" accept="application/json" style="display:none;">
+            <div class="error-msg" id="importMsg"></div>
+          </div>
+        </div>
+        <div class="board-wrap">
+          ${sorted.length ? `
+          <table class="gantt">
+            <thead>
+              <tr class="month-row"><th class="rowlabel">Quem</th><th class="rowlabel">Cliente</th><th class="rowlabel">Job</th><th colspan="${numDays}">${MONTHS_PT[viewMonth]}</th></tr>
+              <tr><th class="rowlabel"></th><th class="rowlabel"></th><th class="rowlabel"></th>${dayHeaders}</tr>
+              <tr>${'<th class="rowlabel"></th>'.repeat(3)}${weekdayHeaders}</tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+          ` : `<div class="empty-state"><strong>Nada no mapa ainda</strong>Preencha responsável, cliente, job e as datas ao lado — o calendário aparece aqui automaticamente.</div>`}
+        </div>
+      </div>
+      <div class="footnote">${storageOk ? 'Os dados são salvos no banco de dados da equipe e compartilhados com todos que abrirem este link.' : 'Não foi possível conectar ao banco de dados agora — verifique sua internet ou tente novamente.'}</div>
+    `;
+
+    document.getElementById('refreshBtn').onclick = async ()=>{
+      await loadEntries();
+      render();
+    };
+    document.getElementById('prevMonth').onclick = ()=>{
+      viewMonth--; if(viewMonth<0){viewMonth=11; viewYear--;}
+      render();
+    };
+    document.getElementById('nextMonth').onclick = ()=>{
+      viewMonth++; if(viewMonth>11){viewMonth=0; viewYear++;}
+      render();
+    };
+    document.getElementById('addBtn').onclick = onAdd;
+    app.querySelectorAll('.del-btn').forEach(btn=>{
+      btn.onclick = ()=> onDelete(btn.dataset.id);
+    });
+    app.querySelectorAll('.edit-btn').forEach(btn=>{
+      btn.onclick = ()=> onEditStart(btn.dataset.id);
+    });
+    const cancelBtn = document.getElementById('cancelEdit');
+    if(cancelBtn){ cancelBtn.onclick = onEditCancel; }
+
+    document.getElementById('exportBtn').onclick = onExport;
+    document.getElementById('importFile').onchange = onImport;
+
+    if(editingId){
+      const e = entries.find(x=>x.id===editingId);
+      if(e){
+        document.getElementById('f-quem').value = e.quem;
+        document.getElementById('f-cliente').value = e.cliente;
+        document.getElementById('f-job').value = e.job;
+        document.getElementById('f-inicio').value = e.inicio;
+        document.getElementById('f-entrega').value = e.entrega;
+      }
+    }
+  }
+
+  function escapeHtml(s){
+    const d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
+  async function onAdd(){
+    const quem = document.getElementById('f-quem').value.trim();
+    const cliente = document.getElementById('f-cliente').value.trim();
+    const job = document.getElementById('f-job').value.trim();
+    const inicio = document.getElementById('f-inicio').value;
+    const entrega = document.getElementById('f-entrega').value;
+    const errorMsg = document.getElementById('errorMsg');
+
+    if(!quem || !cliente || !job || !inicio || !entrega){
+      errorMsg.textContent = 'Preencha todos os campos.';
+      return;
+    }
+    if(inicio > entrega){
+      errorMsg.textContent = 'A data de início deve ser antes da entrega.';
+      return;
+    }
+    errorMsg.textContent = '';
+
+    if(editingId){
+      const idx = entries.findIndex(e=>e.id===editingId);
+      if(idx !== -1){
+        entries[idx] = { ...entries[idx], quem, cliente, job, inicio, entrega };
+      }
+      editingId = null;
+    } else {
+      entries.push({
+        id: Date.now().toString(36) + Math.random().toString(36).slice(2,7),
+        quem, cliente, job, inicio, entrega
+      });
+    }
+
+    // jump view to the month of the entry's start date
+    const sd = parseDate(inicio);
+    viewYear = sd.getFullYear();
+    viewMonth = sd.getMonth();
+    render();
+    await saveEntries();
+  }
+
+  function onExport(){
+    const blob = new Blob([JSON.stringify(entries, null, 2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const stamp = fmtDateISO(new Date());
+    a.href = url;
+    a.download = `mapa-trafego-backup-${stamp}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  async function onImport(ev){
+    const file = ev.target.files[0];
+    const importMsg = document.getElementById('importMsg');
+    if(!file) return;
+    try{
+      const text = await file.text();
+      const parsed = JSON.parse(text);
+      if(!Array.isArray(parsed)) throw new Error('formato inválido');
+      // validação simples dos campos esperados
+      const valid = parsed.every(e => e && e.quem && e.cliente && e.job && e.inicio && e.entrega);
+      if(!valid) throw new Error('campos faltando');
+      // garante IDs (caso o backup seja de uma versão antiga)
+      entries = parsed.map(e => ({
+        id: e.id || (Date.now().toString(36) + Math.random().toString(36).slice(2,7)),
+        quem: e.quem, cliente: e.cliente, job: e.job, inicio: e.inicio, entrega: e.entrega
+      }));
+      importMsg.style.color = 'var(--accent-2)';
+      importMsg.textContent = `${entries.length} job(s) importado(s) com sucesso.`;
+      render();
+      await saveEntries();
+    }catch(err){
+      importMsg.style.color = 'var(--danger)';
+      importMsg.textContent = 'Não foi possível importar esse arquivo.';
+    }
+    ev.target.value = '';
+  }
+  function onEditStart(id){
+    editingId = id;
+    render();
+  }
+
+  function onEditCancel(){
+    editingId = null;
+    render();
+  }
+
+  async function onDelete(id){
+    if(editingId === id){ editingId = null; }
+    entries = entries.filter(e=>e.id !== id);
+    render();
+    await saveEntries();
+  }
+
+  async function init(){
+    app.innerHTML = '<div class="loading">Carregando mapa da equipe…</div>';
+    await loadEntries();
+    render();
+  }
+
+  init();
+})();
+</script>
