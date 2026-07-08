@@ -356,8 +356,82 @@ const docRef = doc(db, "trafego", "entries");
 
   function daysInMonth(y,m){ return new Date(y, m+1, 0).getDate(); }
 
+  function easterDate(year){
+    const a = year % 19;
+    const b = Math.floor(year/100);
+    const c = year % 100;
+    const d = Math.floor(b/4);
+    const e = b % 4;
+    const f = Math.floor((b+8)/25);
+    const g = Math.floor((b-f+1)/3);
+    const h = (19*a+b-d-g+15)%30;
+    const i = Math.floor(c/4);
+    const k = c%4;
+    const l = (32+2*e+2*i-h-k)%7;
+    const m = Math.floor((a+11*h+22*l)/451);
+    const month = Math.floor((h+l-7*m+114)/31);
+    const day = ((h+l-7*m+114)%31)+1;
+    return new Date(year, month-1, day);
+  }
+
+  function addDays(date, n){
+    const d = new Date(date);
+    d.setDate(d.getDate()+n);
+    return d;
+  }
+
+  // feriados nacionais + estaduais de SP para um ano específico
+  function holidaysOfYear(year){
+    const easter = easterDate(year);
+    const list = [
+      { date: new Date(year,0,1),  name: 'Confraternização Universal' },
+      { date: new Date(year,3,21), name: 'Tiradentes' },
+      { date: new Date(year,4,1),  name: 'Dia do Trabalho' },
+      { date: new Date(year,6,9),  name: 'Revolução Constitucionalista (SP)' },
+      { date: new Date(year,8,7),  name: 'Independência do Brasil' },
+      { date: new Date(year,9,12), name: 'Nossa Senhora Aparecida' },
+      { date: new Date(year,10,2), name: 'Finados' },
+      { date: new Date(year,10,15),name: 'Proclamação da República' },
+      { date: new Date(year,10,20),name: 'Dia da Consciência Negra' },
+      { date: new Date(year,11,25),name: 'Natal' },
+      { date: addDays(easter,-48), name: 'Carnaval (segunda)' },
+      { date: addDays(easter,-47), name: 'Carnaval (terça)' },
+      { date: addDays(easter,-2),  name: 'Sexta-feira Santa' },
+      { date: addDays(easter,60),  name: 'Corpus Christi' }
+    ];
+    return list;
+  }
+
+  // monta um mapa 'YYYY-MM-DD' -> nome do feriado (inclui pontes seg/sex quando o feriado cai em terça/quinta)
+  function buildHolidayMap(year){
+    const map = new Map();
+    [year-1, year, year+1].forEach(y=>{
+      holidaysOfYear(y).forEach(h=>{
+        map.set(fmtDateISO(h.date), h.name);
+      });
+    });
+    // pontes: feriado na terça -> pinta segunda; feriado na quinta -> pinta sexta
+    const bridges = [];
+    map.forEach((name, iso)=>{
+      const d = parseDate(iso);
+      const wd = d.getDay(); // 0=dom ... 6=sab
+      if(wd === 2){ // terça
+        const seg = addDays(d,-1);
+        bridges.push([fmtDateISO(seg), `Ponte (véspera de ${name})`]);
+      } else if(wd === 4){ // quinta
+        const sex = addDays(d,1);
+        bridges.push([fmtDateISO(sex), `Ponte (véspera de ${name})`]);
+      }
+    });
+    bridges.forEach(([iso,name])=>{
+      if(!map.has(iso)) map.set(iso, name);
+    });
+    return map;
+  }
+
   function render(){
     const numDays = daysInMonth(viewYear, viewMonth);
+    const holidayMap = buildHolidayMap(viewYear);
     const clientsInView = [...new Set(entries.map(e=>e.cliente))].sort();
 
     // sort rows: by Quem, then start date
@@ -370,9 +444,11 @@ const docRef = doc(db, "trafego", "entries");
     let weekdayHeaders = '';
     for(let d=1; d<=numDays; d++){
       const dt = new Date(viewYear, viewMonth, d);
-      const isWeekend = dt.getDay()===0 || dt.getDay()===6;
-      const isToday = fmtDateISO(dt) === fmtDateISO(today);
-      dayHeaders += `<th class="day-header ${isToday?'today-col':''}">${d}</th>`;
+      const iso = fmtDateISO(dt);
+      const holidayName = holidayMap.get(iso);
+      const isWeekend = dt.getDay()===0 || dt.getDay()===6 || !!holidayName;
+      const isToday = iso === fmtDateISO(today);
+      dayHeaders += `<th class="day-header ${isToday?'today-col':''}" title="${holidayName?escapeHtml(holidayName):''}">${d}</th>`;
       weekdayHeaders += `<th class="daycell ${isWeekend?'weekend':''} ${isToday?'today-col':''}" style="font-size:9px;color:${isWeekend?'#a8a290':'#cfcabb'};background:${isToday?'var(--accent)':'var(--ink)'};padding:2px 0;">${WEEKDAY_PT[dt.getDay()]}</th>`;
     }
 
@@ -387,8 +463,9 @@ const docRef = doc(db, "trafego", "entries");
         let cells = '';
         for(let d=1; d<=numDays; d++){
           const dt = new Date(viewYear, viewMonth, d);
-          const isWeekend = dt.getDay()===0 || dt.getDay()===6;
-          const isToday = fmtDateISO(dt)===fmtDateISO(today);
+          const iso = fmtDateISO(dt);
+          const isWeekend = dt.getDay()===0 || dt.getDay()===6 || holidayMap.has(iso);
+          const isToday = iso===fmtDateISO(today);
           const inRange = dt >= new Date(start.getFullYear(),start.getMonth(),start.getDate()) && dt <= new Date(end.getFullYear(),end.getMonth(),end.getDate());
           cells += `<td class="daycell ${isWeekend?'weekend':''} ${isToday?'today-col':''} ${inRange?'filled':''}" style="${inRange?`background:${color};`:''}"></td>`;
         }
