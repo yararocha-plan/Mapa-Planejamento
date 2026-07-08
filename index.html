@@ -140,6 +140,7 @@
     border-collapse:collapse;
     width:100%;
     min-width:900px;
+    table-layout:fixed;
   }
   table.gantt th, table.gantt td{
     border:1px solid var(--paper-line);
@@ -445,6 +446,12 @@ const docRef = doc(db, "trafego", "entries");
         <div class="board-wrap">
           ${sorted.length ? `
           <table class="gantt">
+            <colgroup>
+              <col style="width:150px">
+              <col style="width:190px">
+              <col style="width:260px">
+              ${'<col style="width:28px">'.repeat(numDays)}
+            </colgroup>
             <thead>
               <tr class="month-row"><th class="rowlabel">Quem</th><th class="rowlabel">Cliente</th><th class="rowlabel">Job</th><th colspan="${numDays}">${MONTHS_PT[viewMonth]}</th></tr>
               <tr><th class="rowlabel"></th><th class="rowlabel"></th><th class="rowlabel"></th>${dayHeaders}</tr>
