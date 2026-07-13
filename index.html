@@ -7,7 +7,8 @@
     --accent:#c0532c;
     --accent-2:#1f6f5c;
     --muted:#7c7768;
-    --weekend:#e6dfce;
+    --weekend:#e8e0c8;
+    --grid:#ffffff;
     --today:#c0532c;
     --danger:#a83e3e;
     font-variant-numeric: tabular-nums;
@@ -143,7 +144,7 @@
     table-layout:fixed;
   }
   table.gantt th, table.gantt td{
-    border:1px solid var(--paper-line);
+    border:1px solid var(--grid);
     text-align:center;
     font-size:12px;
     padding:0;
@@ -168,11 +169,11 @@
     padding:6px 8px;
     font-size:12.5px;
     white-space:nowrap;
-    background:#fff;
+    background:#f7f4ec;
   }
-  td.rowlabel.quem{font-weight:700;}
-  td.rowlabel.cliente{color:var(--muted);}
-  .daycell{width:26px; height:30px;}
+  td.rowlabel.quem{font-weight:700; background:#e7e5df;}
+  td.rowlabel.cliente{color:var(--muted); background:#e7e5df;}
+  .daycell{width:26px; height:30px; background:#f7f4ec;}
   .daycell.weekend{background:var(--weekend);}
   .day-header.today-col{background:var(--accent) !important;}
   .filled{position:relative;}
